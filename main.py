@@ -236,17 +236,17 @@ def sample_attack_and_test():
     # 初始化AI令牌
 
     client_qwen = OpenAI(
-        api_key="sk-e1400870712243aa903b3a09e86bae65",
+        api_key="",
         base_url="https://dashscope.aliyuncs.com/compatible-mode/v1/",
     )
 
     client_chatglm = OpenAI(
-        api_key="368e3b56dcf54b61b521e19f8ebc1d5b.5k46Az0gAewAX86V",
+        api_key="",
         base_url="https://open.bigmodel.cn/api/paas/v4/"
     )
 
     client_gpt4omini = OpenAI(
-        api_key="sk-HPftOXTBjwqRCSUwTorZMVmcI0mK70UKVxxKPUdctXvgabnU",
+        api_key="",
         base_url="https://api.chatanywhere.tech/v1/",
     )
 
