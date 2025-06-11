@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PoisonBench - 大语言模型RAG鲁棒性研究</title>
+    <style>
+        :root {
+            --primary-color: #1e3a8a;
+            --secondary-color: #2563eb;
+            --accent-color: #ff6b6b;
+            --text-color: #333;
+            --light-bg: #f8f9fa;
+            --card-bg: #ffffff;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            line-height: 1.6;
+            color: var(--text-color);
+            background-color: var(--light-bg);
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+        
+        /* 头部样式 */
+        header {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            padding: 60px 0;
+            text-align: center;
+        }
+        
+        .header-content {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        header h1 {
+            font-size: 2.8rem;
+            margin-bottom: 20px;
+        }
+        
+        header p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+            max-width: 80%;
+            margin: 0 auto;
+        }
+        
+        /* 导航栏 */
+        nav {
+            background-color: white;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        
+        .nav-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 15px 0;
+        }
+        
+        nav a {
+            color: var(--text-color);
+            text-decoration: none;
+            margin: 0 20px;
+            font-weight: 500;
+            transition: color 0.3s;
+        }
+        
+        nav a:hover {
+            color: var(--secondary-color);
+        }
+        
+        /* 主要内容区 */
+        main {
+            padding: 60px 0;
+        }
+        
+        section {
+            margin-bottom: 60px;
+        }
+        
+        .section-title {
+            font-size: 2rem;
+            color: var(--primary-color);
+            margin-bottom: 30px;
+            text-align: center;
+            position: relative;
+        }
+        
+        .section-title::after {
+            content: "";
+            position: absolute;
+            bottom: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80px;
+            height: 3px;
+            background-color: var(--secondary-color);
+        }
+        
+        /* 概述区样式 */
+        .overview-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 40px;
+            align-items: center;
+            margin-top: 30px;
+        }
+        
+        .overview-text {
+            flex: 1;
+            min-width: 300px;
+        }
+        
+        .overview-image {
+            flex: 1;
+            min-width: 300px;
+            aspect-ratio: 16/9;
+            background-color: #e9ecef;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        
+        /* 研究方法区 */
+        .methods-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 25px;
+            margin-top: 30px;
+        }
+        
+        .method-card {
+            background-color: var(--card-bg);
+            border-radius: 8px;
+            padding: 25px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        
+        .method-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+        }
+        
+        .method-card h3 {
+            font-size: 1.25rem;
+            color: var(--primary-color);
+            margin-bottom: 15px;
+        }
+        
+        /* 结果部分 */
+        .results-container {
+            margin-top: 30px;
+        }
+        
+        .result-item {
+            margin-bottom: 30px;
+            background-color: var(--card-bg);
+            border-radius: 8px;
+            padding: 25px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        }
+        
+        .result-item h3 {
+            color: var(--primary-color);
+            margin-bottom: 15px;
+        }
+        
+        /* 团队部分 */
+        .team-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 30px;
+            justify-content: center;
+            margin-top: 30px;
+        }
+        
+        /* 资源部分 */
+        .resources-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 25px;
+            margin-top: 30px;
+        }
+        
+        .resource-card {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            background-color: var(--card-bg);
+            border-radius: 8px;
+            padding: 30px 20px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            transition: transform 0.3s;
+        }
+        
+        .resource-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .resource-icon {
+            width: 60px;
+            height: 60px;
+            margin-bottom: 20px;
+            background-color: var(--light-bg);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .btn {
+            display: inline-block;
+            background-color: var(--secondary-color);
+            color: white;
+            padding: 10px 24px;
+            border-radius: 4px;
+            text-decoration: none;
+            font-weight: 500;
+            margin-top: 20px;
+            transition: background-color 0.3s;
+        }
+        
+        .btn:hover {
+            background-color: var(--primary-color);
+        }
+        
+        /* 表格样式 */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 25px 0;
+        }
+        
+        th, td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: left;
+        }
+        
+        th {
+            background-color: var(--primary-color);
+            color: white;
+        }
+        
+        tr:nth-child(even) {
+            background-color: var(--light-bg);
+        }
+        
+        /* 页脚 */
+        footer {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 40px 0;
+            text-align: center;
+        }
+        
+        .footer-content {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        
+        footer a {
+            color: white;
+            text-decoration: underline;
+        }
+        
+        @media (max-width: 768px) {
+            header h1 {
+                font-size: 2.2rem;
+            }
+            
+            .section-title {
+                font-size: 1.8rem;
+            }
+            
+            .nav-container {
+                flex-direction: column;
+                gap: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 页面头部 -->
+    <header>
+        <div class="container header-content">
+            <h1>PoisonBench</h1>
+            <p>面向大语言模型增强检索生成鲁棒性的细粒度直接注入攻击基准</p>
+        </div>
+    </header>
+    
+    <!-- 导航栏 -->
+    <nav>
+        <div class="container nav-container">
+            <a href="#overview">研究概述</a>
+            <a href="#methods">攻击方法</a>
+            <a href="#results">研究结果</a>
+            <a href="#resources">项目资源</a>
+        </div>
+    </nav>
+    
+    <!-- 主要内容区 -->
+    <main class="container">
+        <!-- 研究概述 -->
+        <section id="overview">
+            <h2 class="section-title">研究概述</h2>
+            <div class="overview-container">
+                <div class="overview-text">
+                    <p>检索增强生成(RAG)技术在提升大模型事实准确性方面展现出巨大潜力，但同时也带来了新的安全挑战。本研究提出了PoisonBench，一个专门评估大语言模型在RAG场景下对注入攻击鲁棒性的基准测试框架。我们设计了一系列细粒度的直接注入攻击策略，通过向检索文档中注入有意误导性内容，引导模型生成错误的答案，从而系统评估大语言模型在面对投毒语料时的防御能力。实验结果表明，现有的主流大语言模型对这类攻击存在不同程度的脆弱性，为RAG系统的安全性研究提供了重要参考。</p>
+                </div>
+                <!-- <div class="overview-image">
+                    <div style="text-align: center;">
+                        <div style="font-size: 3rem; color: #aaa;">📊</div>
+                        <p>研究方法概览图</p>
+                    </div>
+                </div> -->
+            </div>
+        </section>
+        
+        <!-- 攻击方法 -->
+        <section id="methods">
+            <h2 class="section-title">投毒攻击方法</h2>
+            <p>我们设计了六种不同的投毒模板，每种模板使用特定的说服策略引导模型做出错误选择。</p>
+            
+            <div class="methods-grid">
+                <div class="method-card">
+                    <h3>模板1: 引用"最新研究"</h3>
+                    <p>在语料中插入"最新研究表明"的虚假说法，声称错误答案实际上是正确的，以此建立虚假权威性。</p>
+                </div>
+                
+                <div class="method-card">
+                    <h3>模板2: "专家共识"</h3>
+                    <p>引入虚假的专家共识数据，例如"87%的专家同意"错误答案，利用从众心理影响模型判断。</p>
+                </div>
+                
+                <div class="method-card">
+                    <h3>模板3: 虚构元分析</h3>
+                    <p>引用不存在的元分析研究，声称该研究汇总了大量证据支持错误答案，增加说服力。</p>
+                </div>
+                
+                <div class="method-card">
+                    <h3>模板4: MIT实验引用</h3>
+                    <p>引用虚构的MIT实验研究结果，利用知名机构的权威性为错误答案背书。</p>
+                </div>
+                
+                <div class="method-card">
+                    <h3>模板5: 否定正确答案</h3>
+                    <p>声称正确答案来源于过时的教科书或早期错误理解，暗示错误答案是更新、更正确的知识。</p>
+                </div>
+                
+                <div class="method-card">
+                    <h3>模板6: "突破性研究"</h3>
+                    <p>引用虚构的突破性研究证明，声称错误答案打破了传统认知，代表最新科学进展。</p>
+                </div>
+            </div>
+        </section>
+        
+        <!-- 研究结果 -->
+        <section id="results">
+            <h2 class="section-title">研究结果</h2>
+            <div class="results-container">
+                <div class="result-item">
+                    <h3>不同模型的攻击成功率(ASR)</h3>
+                    <p>我们对主流大语言模型(包括Qwen、ChatGLM、GPT-4o-mini等)在面对不同投毒模板时的表现进行了系统评估。结果表明:</p>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>模型</th>
+                                <th>平均ASR</th>
+                                <th>最有效模板</th>
+                                <th>最不易受攻击的数据类型</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Qwen</td>
+                                <td>42.7%</td>
+                                <td>模板4 (MIT引用)</td>
+                                <td>事实类问答</td>
+                            </tr>
+                            <tr>
+                                <td>ChatGLM</td>
+                                <td>38.5%</td>
+                                <td>模板2 (专家共识)</td>
+                                <td>比较类问题</td>
+                            </tr>
+                            <tr>
+                                <td>GPT-4o-mini</td>
+                                <td>35.1%</td>
+                                <td>模板6 (突破性研究)</td>
+                                <td>桥接类问题</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div class="result-item">
+                    <h3>关键发现</h3>
+                    <ul>
+                        <li>引用权威机构的投毒策略通常比其他策略更有效</li>
+                        <li>中文语料中的投毒攻击成功率普遍高于英文语料</li>
+                        <li>复杂推理任务(如桥接型问题)比简单事实型问题更难被成功投毒</li>
+                        <li>模型对提示中的数字信息特别敏感，容易被精确数字误导</li>
+                        <li>各模型对不同投毒模板的脆弱性存在明显差异</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+        
+        <!-- 资源链接 -->
+        <section id="resources">
+            <h2 class="section-title">项目资源</h2>
+            <div class="resources-grid">
+                <div class="resource-card">
+                    <div class="resource-icon">📄</div>
+                    <h3>研究论文</h3>
+                    <p>阅读完整的学术论文，了解详细的研究方法与结果</p>
+                    <a href="#" class="btn">下载PDF</a>
+                </div>
+                
+                <div class="resource-card">
+                    <div class="resource-icon">💻</div>
+                    <h3>代码仓库</h3>
+                    <p>访问GitHub获取完整代码实现与数据集</p>
+                    <a href="#" class="btn">Github</a>
+                </div>
+                
+                <div class="resource-card">
+                    <div class="resource-icon">🔍</div>
+                    <h3>数据集</h3>
+                    <p>获取包含多种投毒模板的标准化测试数据集</p>
+                    <a href="#" class="btn">下载数据集</a>
+                </div>
+                
+                <div class="resource-card">
+                    <div class="resource-icon">📊</div>
+                    <h3>实验结果</h3>
+                    <p>查看详细的实验数据与分析</p>
+                    <a href="#" class="btn">查看详情</a>
+                </div>
+            </div>
+        </section>
+    </main>
+    
+    <!-- 页脚 -->
+    <footer>
+        <div class="container footer-content">
+            <p>© 2025 武汉大学国家网络安全学院内容安全理论课程 | 此研究仅用于学术目的，提高AI系统安全性</p>
+        </div>
+    </footer>
+</body>
+</html>
